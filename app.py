@@ -22,7 +22,7 @@ st.markdown("""
         border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         margin-bottom: 20px;
-        border-right: 5px solid #4A90E2; /* شريط ملون جانبي */
+        border-right: 5px solid #4A90E2;
     }
     
     .quiz-card {
@@ -31,7 +31,7 @@ st.markdown("""
         border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         margin-bottom: 20px;
-        border-right: 5px solid #2ECC71; /* شريط أخضر للاختبارات */
+        border-right: 5px solid #2ECC71;
     }
     
     /* تحسين خطوط العناوين */
@@ -46,13 +46,8 @@ st.markdown("""
         color: #34495E;
         font-family: 'Cairo', sans-serif;
     }
-    
-    /* تحسين القائمة الجانبية */
-    .css-1d391kg {
-        background-color: #f8f9fa;
-    }
     </style>
-""", unsafe_safe_boundary=True)
+""", unsafe_allow_html=True)
 
 # --- إعداد الاتصال بقاعدة البيانات (Google Sheets) ---
 def connect_to_sheets():
@@ -102,7 +97,6 @@ if db:
             videos = [r for r in all_records if str(r.get('نوع الرابط')).strip() == 'فيديو']
             if videos:
                 for v in videos:
-                    # فتح بطاقة مخصصة للفيديو بالـ CSS
                     st.markdown(f"""
                     <div class="content-card">
                         <h3>📖 درس رقم {v.get('رقم الدرس', '#')}: {v.get('وصف الدرس', '')}</h3>
@@ -119,7 +113,6 @@ if db:
             quizzes = [r for r in all_records if str(r.get('نوع الرابط')).strip() == 'اختبار']
             if quizzes:
                 for q in quizzes:
-                    # فتح بطاقة مخصصة للاختبار بالـ CSS
                     st.markdown(f"""
                     <div class="quiz-card">
                         <h3>🎯 اختبار الدرس رقم {q.get('رقم الدرس', '#')}</h3>
