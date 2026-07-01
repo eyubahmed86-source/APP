@@ -5,65 +5,56 @@ from oauth2client.service_account import ServiceAccountCredentials
 # --- إعدادات الصفحة الافتراضية ---
 st.set_page_config(page_title="منصة تعليم الطلاب الرقمية", page_icon="🎓", layout="wide")
 
-# --- إضافة الستايل المطور والآمن لمنع التداخل (CSS) ---
+# --- إضافة الستايل المطور والآمن تماماً (CSS) ---
 st.markdown("""
     <style>
-    /* تنسيق الاتجاه العربي بالكامل للمنصة */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMarkdownContainer"] {
-        direction: RTL;
-        text-align: right;
-        font-family: 'Cairo', sans-serif;
+    /* تطبيق الخط العربي والمحاذاة على النصوص والبطاقات فقط دون التأثير على تقسيم الموقع */
+    .main-title, .main-subtitle, .section-title, .content-card, .quiz-card, p, h1, h2, h3 {
+        direction: RTL !important;
+        text-align: right !important;
+        font-family: 'Cairo', sans-serif !important;
     }
     
-    /* تصميم البطاقات الخاص بالدروس والاختبارات */
+    /* ستايل البطاقات المخصصة للدروس */
     .content-card {
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
+        padding: 18px;
+        border-radius: 10px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 15px;
+        margin-bottom: 12px;
         border-right: 5px solid #4A90E2;
     }
     
+    /* ستايل البطاقات المخصصة للاختبارات */
     .quiz-card {
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
+        padding: 18px;
+        border-radius: 10px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 15px;
+        margin-bottom: 12px;
         border-right: 5px solid #2ECC71;
-    }
-    
-    /* تنسيق النصوص داخل البطاقات */
-    .content-card h3, .quiz-card h3 {
-        margin: 0 0 10px 0 !important;
-        font-size: 1.3rem !important;
-        color: #2C3E50 !important;
-        line-height: 1.6 !important;
     }
     
     /* تنسيق العناوين الرئيسية */
     .main-title {
         color: #2C3E50;
-        text-align: center;
+        text-align: center !important;
         font-size: 2.2rem !important;
         font-weight: bold;
-        margin-top: 15px;
         margin-bottom: 10px;
     }
     .main-subtitle {
-        text-align: center;
+        text-align: center !important;
         color: #7F8C8D;
         font-size: 1.1rem !important;
-        margin-bottom: 35px;
+        margin-bottom: 30px;
     }
-    
     .section-title {
         color: #34495E;
-        font-size: 1.6rem !important;
-        margin-bottom: 25px;
+        font-size: 1.5rem !important;
+        margin-bottom: 20px;
         border-bottom: 2px solid #ECF0F1;
-        padding-bottom: 10px;
+        padding-bottom: 8px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -104,6 +95,7 @@ def get_clean_youtube_url(url):
 st.markdown("<div class='main-title'>🎓 منصة تعليم الطلاب الرقمية</div>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>أهلاً بكم في المنصة التعليمية الرقمية. يمكنكم تصفح الدروس وحل الاختبارات المتاحة أدناه بسهولة:</div>", unsafe_allow_html=True)
 
+# نظام تقسيم الأعمدة الآمن من Streamlit
 col_video, col_quiz = st.columns(2)
 
 if db:
@@ -112,7 +104,6 @@ if db:
         
         with col_video:
             st.markdown("<div class='section-title'>📺 فيديوهات الدروس المشروحة</div>", unsafe_allow_html=True)
-            # جلب الفيديوهات فقط بطريقة نظيفة تمنع ظهور أي قيم أخرى
             for r in all_records:
                 if str(r.get('نوع الرابط', '')).strip() == 'فيديو':
                     lesson_num = r.get('رقم الدرس', '#')
@@ -121,7 +112,7 @@ if db:
                     
                     st.markdown(f"""
                     <div class="content-card">
-                        <h3>📖 درس رقم {lesson_num}: {lesson_desc}</h3>
+                        <h3 style="margin:0;">📖 درس رقم {lesson_num}: {lesson_desc}</h3>
                     </div>
                     """, unsafe_allow_html=True)
                     st.video(clean_url)
@@ -129,7 +120,6 @@ if db:
                     
         with col_quiz:
             st.markdown("<div class='section-title'>📝 الاختبارات والتقييمات المتاحة</div>", unsafe_allow_html=True)
-            # جلب الاختبارات فقط بطريقة نظيفة
             for r in all_records:
                 if str(r.get('نوع الرابط', '')).strip() == 'اختبار':
                     quiz_num = r.get('رقم الدرس', '#')
@@ -138,8 +128,8 @@ if db:
                     
                     st.markdown(f"""
                     <div class="quiz-card">
-                        <h3>🎯 اختبار الدرس رقم {quiz_num}</h3>
-                        <p style='color: #7F8C8D; margin: 0;'>ملاحظة: {quiz_desc}</p>
+                        <h3 style="margin:0;">🎯 اختبار الدرس رقم {quiz_num}</h3>
+                        <p style='color: #7F8C8D; margin: 5px 0 0 0;'>ملاحظة: {quiz_desc}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     st.link_button(url=quiz_url, label=f"🔗 دخول الاختبار السريع", use_container_width=True)
