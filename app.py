@@ -5,63 +5,65 @@ from oauth2client.service_account import ServiceAccountCredentials
 # --- إعدادات الصفحة الافتراضية ---
 st.set_page_config(page_title="منصة تعليم الطلاب الرقمية", page_icon="🎓", layout="wide")
 
-# --- إضافة الستايل المطور والآمن (CSS) ---
+# --- إضافة الستايل المطور والآمن لمنع التداخل (CSS) ---
 st.markdown("""
     <style>
-    /* تنسيق الحاوية الرئيسية وتحديد الاتجاه العربي */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    /* تنسيق الاتجاه العربي بالكامل للمنصة */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMarkdownContainer"] {
         direction: RTL;
         text-align: right;
         font-family: 'Cairo', sans-serif;
     }
     
-    /* تنسيق البطاقات الأنيقة ومنع ظهور أي نصوص خلفها */
-    .content-card, .quiz-card {
+    /* تصميم البطاقات الخاص بالدروس والاختبارات */
+    .content-card {
         background-color: #ffffff;
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         border-right: 5px solid #4A90E2;
-        display: block;
-        width: 100%;
     }
     
     .quiz-card {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 15px;
         border-right: 5px solid #2ECC71;
     }
     
-    /* تنسيق العناوين داخل البطاقات */
+    /* تنسيق النصوص داخل البطاقات */
     .content-card h3, .quiz-card h3 {
         margin: 0 0 10px 0 !important;
-        font-size: 1.25rem !important;
+        font-size: 1.3rem !important;
         color: #2C3E50 !important;
         line-height: 1.6 !important;
     }
     
-    /* العنوان الرئيسي للمنصة */
+    /* تنسيق العناوين الرئيسية */
     .main-title {
         color: #2C3E50;
         text-align: center;
         font-size: 2.2rem !important;
         font-weight: bold;
-        margin-top: 10px;
+        margin-top: 15px;
         margin-bottom: 10px;
     }
     .main-subtitle {
         text-align: center;
         color: #7F8C8D;
         font-size: 1.1rem !important;
-        margin-bottom: 30px;
+        margin-bottom: 35px;
     }
     
-    /* العناوين الجانبية للأقسام */
     .section-title {
         color: #34495E;
-        font-size: 1.5rem !important;
-        margin-bottom: 20px;
+        font-size: 1.6rem !important;
+        margin-bottom: 25px;
         border-bottom: 2px solid #ECF0F1;
-        padding-bottom: 8px;
+        padding-bottom: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -110,15 +112,13 @@ if db:
         
         with col_video:
             st.markdown("<div class='section-title'>📺 فيديوهات الدروس المشروحة</div>", unsafe_allow_html=True)
-            # فلترة الفيديوهات بشكل صحيح ونظيف
-            videos = [r for r in all_records if str(r.get('نوع الرابط')).strip() == 'فيديو']
-            if videos:
-                for v in videos:
-                    lesson_num = v.get('رقم الدرس', '#')
-                    lesson_desc = v.get('وصف الدرس', '')
-                    clean_url = get_clean_youtube_url(v.get('الرابط', ''))
+            # جلب الفيديوهات فقط بطريقة نظيفة تمنع ظهور أي قيم أخرى
+            for r in all_records:
+                if str(r.get('نوع الرابط', '')).strip() == 'فيديو':
+                    lesson_num = r.get('رقم الدرس', '#')
+                    lesson_desc = r.get('وصف الدرس', '')
+                    clean_url = get_clean_youtube_url(r.get('الرابط', ''))
                     
-                    # عرض البطاقة والمشغل بشكل منفصل دون أي تداخل
                     st.markdown(f"""
                     <div class="content-card">
                         <h3>📖 درس رقم {lesson_num}: {lesson_desc}</h3>
@@ -126,18 +126,15 @@ if db:
                     """, unsafe_allow_html=True)
                     st.video(clean_url)
                     st.markdown("<br>", unsafe_allow_html=True)
-            else:
-                st.info("لا توجد فيديوهات مضافة بعد.")
-                
+                    
         with col_quiz:
             st.markdown("<div class='section-title'>📝 الاختبارات والتقييمات المتاحة</div>", unsafe_allow_html=True)
-            # فلترة الاختبارات بشكل صحيح ونظيف
-            quizzes = [r for r in all_records if str(r.get('نوع الرابط')).strip() == 'اختبار']
-            if quizzes:
-                for q in quizzes:
-                    quiz_num = q.get('رقم الدرس', '#')
-                    quiz_desc = q.get('وصف الدرس', 'لا توجد ملاحظات إضافية')
-                    quiz_url = q.get('الرابط', '#')
+            # جلب الاختبارات فقط بطريقة نظيفة
+            for r in all_records:
+                if str(r.get('نوع الرابط', '')).strip() == 'اختبار':
+                    quiz_num = r.get('رقم الدرس', '#')
+                    quiz_desc = r.get('وصف الدرس', 'لا توجد ملاحظات إضافية')
+                    quiz_url = r.get('الرابط', '#')
                     
                     st.markdown(f"""
                     <div class="quiz-card">
@@ -147,8 +144,7 @@ if db:
                     """, unsafe_allow_html=True)
                     st.link_button(url=quiz_url, label=f"🔗 دخول الاختبار السريع", use_container_width=True)
                     st.markdown("<br>", unsafe_allow_html=True)
-            else:
-                st.info("لا توجد اختبارات مضافة بعد.")
+                    
     except Exception as e:
         st.warning("الجدول فارغ حالياً، قم بتسجيل الدخول كمعلم لإضافة المحتوى الأول.")
 
