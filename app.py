@@ -1,50 +1,67 @@
 import streamlit as st
 import gspread
-import re
 from oauth2client.service_account import ServiceAccountCredentials
 
 # --- إعدادات الصفحة الافتراضية ---
 st.set_page_config(page_title="منصة تعليم الطلاب الرقمية", page_icon="🎓", layout="wide")
 
-# --- إضافة الستايل المخصص (CSS) ---
+# --- إضافة الستايل المطور والآمن (CSS) ---
 st.markdown("""
     <style>
-    /* تغيير اتجاه النصوص والصفحة لتناسب اللغة العربية */
-    body, .main, block-container {
+    /* تنسيق الحاوية الرئيسية وتحديد الاتجاه العربي */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         direction: RTL;
         text-align: right;
+        font-family: 'Cairo', sans-serif;
     }
     
-    /* ستايل مخصص للبطاقات (Cards) الخاصة بالفيديوهات والاختبارات */
-    .content-card {
+    /* تنسيق البطاقات الأنيقة ومنع ظهور أي نصوص خلفها */
+    .content-card, .quiz-card {
         background-color: #ffffff;
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         margin-bottom: 20px;
         border-right: 5px solid #4A90E2;
+        display: block;
+        width: 100%;
     }
     
     .quiz-card {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
         border-right: 5px solid #2ECC71;
     }
     
-    /* تحسين خطوط العناوين */
-    h1 {
-        color: #2C3E50;
-        text-align: center;
-        font-family: 'Cairo', sans-serif;
-        margin-bottom: 30px !important;
+    /* تنسيق العناوين داخل البطاقات */
+    .content-card h3, .quiz-card h3 {
+        margin: 0 0 10px 0 !important;
+        font-size: 1.25rem !important;
+        color: #2C3E50 !important;
+        line-height: 1.6 !important;
     }
     
-    h2, h3 {
+    /* العنوان الرئيسي للمنصة */
+    .main-title {
+        color: #2C3E50;
+        text-align: center;
+        font-size: 2.2rem !important;
+        font-weight: bold;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    .main-subtitle {
+        text-align: center;
+        color: #7F8C8D;
+        font-size: 1.1rem !important;
+        margin-bottom: 30px;
+    }
+    
+    /* العناوين الجانبية للأقسام */
+    .section-title {
         color: #34495E;
-        font-family: 'Cairo', sans-serif;
+        font-size: 1.5rem !important;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #ECF0F1;
+        padding-bottom: 8px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -82,9 +99,8 @@ def get_clean_youtube_url(url):
     return url
 
 # --- واجهة المستخدم الرئيسية للتطبيق ---
-st.markdown("<h1>🎓 منصة تعليم الطلاب الرقمية</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #7F8C8D; font-size: 1.1rem;'>أهلاً بكم في المنصة التعليمية الرقمية. يمكنكم تصفح الدروس وحل الاختبارات المتاحة أدناه بسهولة:</p>", unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>🎓 منصة تعليم الطلاب الرقمية</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>أهلاً بكم في المنصة التعليمية الرقمية. يمكنكم تصفح الدروس وحل الاختبارات المتاحة أدناه بسهولة:</div>", unsafe_allow_html=True)
 
 col_video, col_quiz = st.columns(2)
 
@@ -93,34 +109,44 @@ if db:
         all_records = db.get_all_records()
         
         with col_video:
-            st.markdown("<h2>📺 فيديوهات الدروس المشروحة</h2>", unsafe_allow_html=True)
+            st.markdown("<div class='section-title'>📺 فيديوهات الدروس المشروحة</div>", unsafe_allow_html=True)
+            # فلترة الفيديوهات بشكل صحيح ونظيف
             videos = [r for r in all_records if str(r.get('نوع الرابط')).strip() == 'فيديو']
             if videos:
                 for v in videos:
+                    lesson_num = v.get('رقم الدرس', '#')
+                    lesson_desc = v.get('وصف الدرس', '')
+                    clean_url = get_clean_youtube_url(v.get('الرابط', ''))
+                    
+                    # عرض البطاقة والمشغل بشكل منفصل دون أي تداخل
                     st.markdown(f"""
                     <div class="content-card">
-                        <h3>📖 درس رقم {v.get('رقم الدرس', '#')}: {v.get('وصف الدرس', '')}</h3>
+                        <h3>📖 درس رقم {lesson_num}: {lesson_desc}</h3>
                     </div>
                     """, unsafe_allow_html=True)
-                    clean_url = get_clean_youtube_url(v['الرابط'])
                     st.video(clean_url)
                     st.markdown("<br>", unsafe_allow_html=True)
             else:
                 st.info("لا توجد فيديوهات مضافة بعد.")
                 
         with col_quiz:
-            st.markdown("<h2>📝 الاختبارات والتقييمات المتاحة</h2>", unsafe_allow_html=True)
+            st.markdown("<div class='section-title'>📝 الاختبارات والتقييمات المتاحة</div>", unsafe_allow_html=True)
+            # فلترة الاختبارات بشكل صحيح ونظيف
             quizzes = [r for r in all_records if str(r.get('نوع الرابط')).strip() == 'اختبار']
             if quizzes:
                 for q in quizzes:
+                    quiz_num = q.get('رقم الدرس', '#')
+                    quiz_desc = q.get('وصف الدرس', 'لا توجد ملاحظات إضافية')
+                    quiz_url = q.get('الرابط', '#')
+                    
                     st.markdown(f"""
                     <div class="quiz-card">
-                        <h3>🎯 اختبار الدرس رقم {q.get('رقم الدرس', '#')}</h3>
-                        <p style='color: #7F8C8D;'>ملاحظة: {q.get('وصف الدرس', 'لا توجد ملاحظات إضافية')}</p>
+                        <h3>🎯 اختبار الدرس رقم {quiz_num}</h3>
+                        <p style='color: #7F8C8D; margin: 0;'>ملاحظة: {quiz_desc}</p>
                     </div>
                     """, unsafe_allow_html=True)
-                    st.link_button(url=q['الرابط'], label=f"🔗 دخول الاختبار السريع", use_container_width=True)
-                    st.markdown("<br><br>", unsafe_allow_html=True)
+                    st.link_button(url=quiz_url, label=f"🔗 دخول الاختبار السريع", use_container_width=True)
+                    st.markdown("<br>", unsafe_allow_html=True)
             else:
                 st.info("لا توجد اختبارات مضافة بعد.")
     except Exception as e:
