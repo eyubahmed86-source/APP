@@ -67,32 +67,65 @@ password_input = st.sidebar.text_input("أدخل كلمة السر للدخول:
 
 if password_input == "7962400":
     st.sidebar.success("تم تسجيل الدخول بنجاح!")
-    st.sidebar.markdown("### ➕ إضافة محتوى جديد")
     
-    action = st.sidebar.radio("اختر الإجراء:", ("إضافة رابط اختبار", "إضافة فيديو الدرس (يوتيوب)"))
+    # خيارات لوحة التحكم (إضافة أو حذف)
+    admin_mode = st.sidebar.radio("اختر العملية:", ("➕ إضافة محتوى جديد", "🗑️ حذف محتوى حالي"))
     
-    lesson_num = st.sidebar.text_input("رقم الدرس (مثال: 1 أو 2):")
-    lesson_desc = st.sidebar.text_input("وصف الدرس (مثال: شرح الجمع والطرح):")
-    
-    if action == "إضافة رابط اختبار":
-        quiz_url = st.sidebar.text_input("أدخل رابط الاختبار:")
-        if st.sidebar.button("حفظ رابط الاختبار"):
-            if quiz_url and db:
-                db.append_row(["اختبار", quiz_url, lesson_desc, lesson_num])
-                st.sidebar.success("تم حفظ الاختبار بنجاح!")
-                st.rerun()
-            else:
-                st.sidebar.error("الرجاء إدخال رابط صحيح.")
-                
-    elif action == "إضافة فيديو الدرس (يوتيوب)":
-        video_url = st.sidebar.text_input("أدخل رابط فيديو اليوتيوب:")
-        if st.sidebar.button("حفظ فيديو الدرس"):
-            if video_url and db:
-                db.append_row(["فيديو", video_url, lesson_desc, lesson_num])
-                st.sidebar.success("تم حفظ فيديو الدرس بنجاح!")
-                st.rerun()
-            else:
-                st.sidebar.error("الرجاء إدخال رابط صحيح.")
+    if admin_mode == "➕ إضافة محتوى جديد":
+        action = st.sidebar.radio("نوع المحتوى:", ("إضافة رابط اختبار", "إضافة فيديو الدرس (يوتيوب)"))
+        
+        lesson_num = st.sidebar.text_input("رقم الدرس (مثال: 1 أو 2):")
+        lesson_desc = st.sidebar.text_input("وصف الدرس (مثال: شرح الجمع والطرح):")
+        
+        if action == "إضافة رابط اختبار":
+            quiz_url = st.sidebar.text_input("أدخل رابط الاختبار:")
+            if st.sidebar.button("حفظ رابط الاختبار"):
+                if quiz_url and db:
+                    db.append_row(["اختبار", quiz_url, lesson_desc, lesson_num])
+                    st.sidebar.success("تم حفظ الاختبار بنجاح!")
+                    st.rerun()
+                else:
+                    st.sidebar.error("الرجاء إدخال رابط صحيح.")
+                    
+        elif action == "إضافة فيديو الدرس (يوتيوب)":
+            video_url = st.sidebar.text_input("أدخل رابط فيديو اليوتيوب:")
+            if st.sidebar.button("حفظ فيديو الدرس"):
+                if video_url and db:
+                    db.append_row(["فيديو", video_url, lesson_desc, lesson_num])
+                    st.sidebar.success("تم حفظ فيديو الدرس بنجاح!")
+                    st.rerun()
+                else:
+                    st.sidebar.error("الرجاء إدخال رابط صحيح.")
+                    
+    elif admin_mode == "🗑️ حذف محتوى حالي":
+        st.sidebar.markdown("### اختر المحتوى المراد حذفه:")
+        if db:
+            try:
+                # جلب البيانات مع أرقام الصفوف لسهولة الحذف
+                raw_rows = db.get_all_values()
+                if len(raw_rows) > 1: # التأكد من وجود بيانات عدا العناوين
+                    options_to_delete = []
+                    # نمر على الصفوف بدءاً من الصف الثاني (السطر الأول عناوين)
+                    for idx, row in enumerate(raw_rows[1:], start=2):
+                        if len(row) >= 4:
+                            display_text = f"[{row[0]}] درس {row[3]}: {row[2][:20]}"
+                            options_to_delete.append((idx, display_text))
+                    
+                    selected_item = st.sidebar.selectbox(
+                        "اختر العنصر للحذف:", 
+                        options=options_to_delete, 
+                        format_func=lambda x: x[1]
+                    )
+                    
+                    if st.sidebar.button("❌ تأكيد الحذف النهائي"):
+                        row_index_to_delete = selected_item[0]
+                        db.delete_rows(row_index_to_delete)
+                        st.sidebar.success("تم حذف العنصر بنجاح من قاعدة البيانات!")
+                        st.rerun()
+                else:
+                    st.sidebar.info("قاعدة البيانات فارغة تماماً، لا يوجد ما يمكن حذفه.")
+            except Exception as e:
+                st.sidebar.error("حدث خطأ أثناء محاولة جلب قائمة الحذف.")
 
 elif password_input != "":
     st.sidebar.error("كلمة السر غير صحيحة!")
