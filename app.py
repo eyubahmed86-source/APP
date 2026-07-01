@@ -5,9 +5,16 @@ from oauth2client.service_account import ServiceAccountCredentials
 # --- إعداد الاتصال بقاعدة البيانات (Google Sheets) ---
 def connect_to_sheets():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
-    client = gspread.authorize(creds)
     
+    # التحقق أولاً إذا كان الموقع يعمل على الإنترنت ويستخدم الأسرار (Secrets)
+    if "gcp_service_account" in st.secrets:
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    else:
+        # إذا كان يعمل محلياً على جهازك، سيستخدم الملف العادي
+        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+        
+    client = gspread.authorize(creds)
     sheet_url = "https://docs.google.com/spreadsheets/d/1o1dk1mQdXOTR_6x8H-_iWMVg_vQAaMB0UUav3aSKlyU/edit?usp=sharing"
     sheet = client.open_by_url(sheet_url).sheet1
     return sheet
@@ -15,7 +22,7 @@ def connect_to_sheets():
 try:
     db = connect_to_sheets()
 except Exception as e:
-    st.error("فشل الاتصال بقاعدة البيانات. تأكد من إعداد credentials.json ومنح صلاحية 'محرر' للبريد الخدمي عبر زر مشاركة.")
+    st.error("فشل الاتصال بقاعدة البيانات. تأكد من إعداد المفاتيح السرية بشكل صحيح.")
     db = None
 
 # --- واجهة المستخدم الرئيسية للتطبيق ---
@@ -26,7 +33,6 @@ col_video, col_quiz = st.columns(2)
 
 if db:
     try:
-        # جلب جميع البيانات المخزنة لعرضها للطلاب
         all_records = db.get_all_records()
         
         with col_video:
@@ -34,7 +40,6 @@ if db:
             videos = [r for r in all_records if str(r.get('نوع الرابط')).strip() == 'فيديو']
             if videos:
                 for v in videos:
-                    # عرض رقم الدرس والوصف فوق الفيديو
                     st.subheader(f"📖 درس رقم {v.get('رقم الدرس', '#')}: {v.get('وصف الدرس', '')}")
                     st.video(v['الرابط'])
                     st.markdown("---")
@@ -66,7 +71,6 @@ if password_input == "7962400":
     
     action = st.sidebar.radio("اختر الإجراء:", ("إضافة رابط اختبار", "إضافة فيديو الدرس (يوتيوب)"))
     
-    # حقول إدخال مشتركة بناءً على تصميم جدولك
     lesson_num = st.sidebar.text_input("رقم الدرس (مثال: 1 أو 2):")
     lesson_desc = st.sidebar.text_input("وصف الدرس (مثال: شرح الجمع والطرح):")
     
@@ -74,7 +78,6 @@ if password_input == "7962400":
         quiz_url = st.sidebar.text_input("أدخل رابط الاختبار:")
         if st.sidebar.button("حفظ رابط الاختبار"):
             if quiz_url and db:
-                # الترتيب حسب أعمدتك: نوع الرابط، الرابط، وصف الدرس، رقم الدرس
                 db.append_row(["اختبار", quiz_url, lesson_desc, lesson_num])
                 st.sidebar.success("تم حفظ الاختبار بنجاح!")
                 st.rerun()
@@ -85,7 +88,6 @@ if password_input == "7962400":
         video_url = st.sidebar.text_input("أدخل رابط فيديو اليوتيوب:")
         if st.sidebar.button("حفظ فيديو الدرس"):
             if video_url and db:
-                # الترتيب حسب أعمدتك: نوع الرابط، الرابط، وصف الدرس، رقم الدرس
                 db.append_row(["فيديو", video_url, lesson_desc, lesson_num])
                 st.sidebar.success("تم حفظ فيديو الدرس بنجاح!")
                 st.rerun()
