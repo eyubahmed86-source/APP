@@ -116,7 +116,9 @@ if db:
                     </div>
                     """, unsafe_allow_html=True)
                     st.video(clean_url)
-                    st.markdown("<br>", unsafe_allow_html=True)
+                    # زر احتياطي يأخذ الطالب إلى يوتيوب مباشرة في حال لم يعمل المشغل المدمج
+                    st.link_button(url=clean_url, label="📺 فتح الفيديو مباشرة على يوتيوب", use_container_width=True)
+                    st.markdown("<br><br>", unsafe_allow_html=True)
                     
         with col_quiz:
             st.markdown("<div class='section-title'>📝 الاختبارات والتقييمات المتاحة</div>", unsafe_allow_html=True)
@@ -133,7 +135,7 @@ if db:
                     </div>
                     """, unsafe_allow_html=True)
                     st.link_button(url=quiz_url, label=f"🔗 دخول الاختبار السريع", use_container_width=True)
-                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown("<br><br>", unsafe_allow_html=True)
                     
     except Exception as e:
         st.warning("الجدول فارغ حالياً، قم بتسجيل الدخول كمعلم لإضافة المحتوى الأول.")
