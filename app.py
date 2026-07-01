@@ -3,6 +3,57 @@ import gspread
 import re
 from oauth2client.service_account import ServiceAccountCredentials
 
+# --- إعدادات الصفحة الافتراضية ---
+st.set_page_config(page_title="منصة تعليم الطلاب الرقمية", page_icon="🎓", layout="wide")
+
+# --- إضافة الستايل المخصص (CSS) ---
+st.markdown("""
+    <style>
+    /* تغيير اتجاه النصوص والصفحة لتناسب اللغة العربية */
+    body, .main, block-container {
+        direction: RTL;
+        text-align: right;
+    }
+    
+    /* ستايل مخصص للبطاقات (Cards) الخاصة بالفيديوهات والاختبارات */
+    .content-card {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        border-right: 5px solid #4A90E2; /* شريط ملون جانبي */
+    }
+    
+    .quiz-card {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        border-right: 5px solid #2ECC71; /* شريط أخضر للاختبارات */
+    }
+    
+    /* تحسين خطوط العناوين */
+    h1 {
+        color: #2C3E50;
+        text-align: center;
+        font-family: 'Cairo', sans-serif;
+        margin-bottom: 30px !important;
+    }
+    
+    h2, h3 {
+        color: #34495E;
+        font-family: 'Cairo', sans-serif;
+    }
+    
+    /* تحسين القائمة الجانبية */
+    .css-1d391kg {
+        background-color: #f8f9fa;
+    }
+    </style>
+""", unsafe_safe_boundary=True)
+
 # --- إعداد الاتصال بقاعدة البيانات (Google Sheets) ---
 def connect_to_sheets():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -27,19 +78,18 @@ except Exception as e:
 # --- دالة ذكية لإصلاح روابط اليوتيوب المأخوذة من الهاتف ---
 def get_clean_youtube_url(url):
     url = str(url).strip()
-    # إذا كان الرابط مأخوذ كمشاركة من الموبايل (youtu.be)
     if "youtu.be/" in url:
         video_id = url.split("youtu.be/")[-1].split("?")[0]
         return f"https://www.youtube.com/watch?v={video_id}"
-    # إذا كان الرابط فيديو قصير (Shorts)
     elif "youtube.com/shorts/" in url:
         video_id = url.split("youtube.com/shorts/")[-1].split("?")[0]
         return f"https://www.youtube.com/watch?v={video_id}"
     return url
 
 # --- واجهة المستخدم الرئيسية للتطبيق ---
-st.title("🎓 منصة تعليم الطلاب الرقمية")
-st.write("أهلاً بكم في المنصة التعليمية. يمكنكم تصفح الدروس والاختبارات المتاحة أدناه:")
+st.markdown("<h1>🎓 منصة تعليم الطلاب الرقمية</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #7F8C8D; font-size: 1.1rem;'>أهلاً بكم في المنصة التعليمية الرقمية. يمكنكم تصفح الدروس وحل الاختبارات المتاحة أدناه بسهولة:</p>", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
 
 col_video, col_quiz = st.columns(2)
 
@@ -48,28 +98,36 @@ if db:
         all_records = db.get_all_records()
         
         with col_video:
-            st.header("📺 فيديوهات الدروس")
+            st.markdown("<h2>📺 فيديوهات الدروس المشروحة</h2>", unsafe_allow_html=True)
             videos = [r for r in all_records if str(r.get('نوع الرابط')).strip() == 'فيديو']
             if videos:
                 for v in videos:
-                    st.subheader(f"📖 درس رقم {v.get('رقم الدرس', '#')}: {v.get('وصف الدرس', '')}")
-                    # تنظيف الرابط قبل تشغيله ليقبل روابط الموبايل والـ Shorts
+                    # فتح بطاقة مخصصة للفيديو بالـ CSS
+                    st.markdown(f"""
+                    <div class="content-card">
+                        <h3>📖 درس رقم {v.get('رقم الدرس', '#')}: {v.get('وصف الدرس', '')}</h3>
+                    </div>
+                    """, unsafe_allow_html=True)
                     clean_url = get_clean_youtube_url(v['الرابط'])
                     st.video(clean_url)
-                    st.markdown("---")
+                    st.markdown("<br>", unsafe_allow_html=True)
             else:
                 st.info("لا توجد فيديوهات مضافة بعد.")
                 
         with col_quiz:
-            st.header("📝 الاختبارات المتاحة")
+            st.markdown("<h2>📝 الاختبارات والتقييمات المتاحة</h2>", unsafe_allow_html=True)
             quizzes = [r for r in all_records if str(r.get('نوع الرابط')).strip() == 'اختبار']
             if quizzes:
                 for q in quizzes:
-                    st.subheader(f"🎯 اختبار الدرس رقم {q.get('رقم الدرس', '#')}")
-                    if q.get('وصف الدرس'):
-                        st.caption(f"ملاحظة: {q.get('وصف الدرس')}")
-                    st.link_button(url=q['الرابط'], label=f"🔗 دخول الاختبار")
-                    st.markdown("---")
+                    # فتح بطاقة مخصصة للاختبار بالـ CSS
+                    st.markdown(f"""
+                    <div class="quiz-card">
+                        <h3>🎯 اختبار الدرس رقم {q.get('رقم الدرس', '#')}</h3>
+                        <p style='color: #7F8C8D;'>ملاحظة: {q.get('وصف الدرس', 'لا توجد ملاحظات إضافية')}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.link_button(url=q['الرابط'], label=f"🔗 دخول الاختبار السريع", use_container_width=True)
+                    st.markdown("<br><br>", unsafe_allow_html=True)
             else:
                 st.info("لا توجد اختبارات مضافة بعد.")
     except Exception as e:
